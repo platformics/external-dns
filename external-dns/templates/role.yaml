@@ -3,11 +3,12 @@ Copyright VMware, Inc.
 SPDX-License-Identifier: APACHE-2.0
 */}}
 
-{{- if and .Values.rbac.create .Values.rbac.clusterRole }}
+{{- if and .Values.rbac.create (not .Values.rbac.clusterRole) }}
 apiVersion: rbac.authorization.k8s.io/{{ .Values.rbac.apiVersion }}
-kind: ClusterRole
+kind: Role
 metadata:
-  name: {{ template "common.names.fullname.namespace" . }}
+  name: {{ template "external-dns.fullname" . }}
+  namespace: {{ template "external-dns.namespace" . }}
   labels: {{ include "external-dns.labels" . | nindent 4 }}
     {{- if .Values.commonLabels }}
     {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
@@ -21,9 +22,7 @@ rules:
     resources:
       - services
       - pods
-      - nodes
       - endpoints
-      - namespaces
     verbs:
       - get
       - list
@@ -89,35 +88,6 @@ rules:
       - get
       - list
       - watch
-  - apiGroups:
-      - configuration.konghq.com
-    resources:
-      - tcpingresses
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - gateway.networking.k8s.io
-    resources:
-      - gateways
-      - httproutes
-      - tlsroutes
-      - tcproutes
-      - udproutes
-      - grpcroutes
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - cis.f5.com
-    resources:
-      - virtualservers
-    verbs:
-      - get
-      - watch
-      - list
   {{- if or .Values.crd.create .Values.crd.apiversion }}
   - apiGroups:
       {{- if .Values.crd.create }}
